@@ -1,0 +1,16 @@
+name: CI Básico
+
+on:
+  
+  workflow_dispatch: 
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Fazer checkout do código
+        uses: actions/checkout@v4
+
+      - name: Executar comando de teste
+        run: echo "Workflow a correr com sucesso!"
