@@ -14,3 +14,6 @@ jobs:
 
       - name: Executar comando de teste
         run: echo "Workflow a correr com sucesso!"
+      - name: run a script
+        run: 
+          sqlplus ${{ secrets.CS }}
