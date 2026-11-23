@@ -1,32 +1,63 @@
-# This is a basic workflow that is manually triggered
-
-name: Manual workflow
-
-# Controls when the action will run. Workflow runs when manually triggered using the UI
-# or API.
+name: Deploy Manual com Variáveis
+ 
 on:
   workflow_dispatch:
-    # Inputs the workflow accepts.
     inputs:
-      name:
-        # Friendly description to be shown in the UI instead of 'name'
-        description: 'Nome da Pasta a Criar'
-        # Default value if no value is explicitly provided
-        default: 'World'
-        # Input has to be provided for the workflow to run
+      ambiente:
+        description: "Ambiente de destino"
         required: true
-        # The data type of the input
+        type: choice
+        default: staging
+        options:
+          - staging
+          - production
+      versao:
+        description: "Tag ou versão a publicar (ex.: v1.2.0)"
+        required: true
         type: string
-
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+      executar_migracoes:
+        description: "Executar migrações de base de dados antes do deploy?"
+        required: false
+        type: boolean
+        default: false
+      replicas:
+        description: "Número de réplicas"
+        required: false
+        type: number
+        default: 2
+ 
+permissions:
+  contents: read
+ 
 jobs:
-  # This workflow contains a single job called "greet"
-  greet:
-    # The type of runner that the job will run on
+  deploy:
     runs-on: ubuntu-latest
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
+    # Associa o job ao Environment escolhido (ativa aprovações e secrets do ambiente)
+    environment: ${{ inputs.ambiente }}
+ 
     steps:
-    # Runs a single command using the runners shell
-    - name: Send greeting
-      run: echo "Hello ${{ inputs.name }}"
+      - name: Obter código
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.versao }}
+ 
+      - name: Validar parâmetros
+        env:
+          AMBIENTE: ${{ inputs.ambiente }}
+          VERSAO: ${{ inputs.versao }}
+          REPLICAS: ${{ inputs.replicas }}
+        run: |
+          echo "A preparar deploy da versão $VERSAO para $AMBIENTE com $REPLICAS réplicas."
+ 
+      - name: Executar migrações
+        if: ${{ inputs.executar_migracoes == true }}
+        run: |
+          echo "A correr migrações na base de dados..."
+ 
+      - name: Executar deploy
+        env:
+          AMBIENTE: ${{ inputs.ambiente }}
+          VERSAO: ${{ inputs.versao }}
+          REPLICAS: ${{ inputs.replicas }}
+        run: |
+          echo "Deploy concluído: $VERSAO em $AMBIENTE ($REPLICAS réplicas)."
